@@ -7,17 +7,17 @@
  http://www.arduino.cc/en/Tutorial/Knob
 */
 
-//#include <Servo.h>
+#include <Servo.h>
 
-//Servo myservo;  // create servo object to control a servo
-int sensorValue,regulaUmbral, servoValue,cont, prom, optionUmbral;
+Servo myservo;  // create servo object to control a servo
+int sensorValue,regulaUmbral, servoValue,cont, prom, optionUmbral,segs;
  
-const int BUTTON_PIN = 7;
+//const int BUTTON_PIN = 7;
 const int led = 8;
-const int largoArray = 10;                 // variable que contiene el largo del array del sensor
+const int largoArray = 10;// variable que contiene el largo del array del sensor
 int arraySensor[largoArray]; 
-//int arrayRegulador[largoArray];
-int currentState;                         // the current reading from the input pin
+int arrayRegulador[largoArray];
+int currentState  = HIGH;                         // the current reading from the input pin
 
 
 
@@ -32,9 +32,10 @@ int promValues(int b){
   return sum/largoArray ;
 }
 
-
+           
 
 int getUmbral(int p,int o, int um){
+  
   if(currentState == LOW){
     if (optionUmbral== 3){
         optionUmbral=0;
@@ -45,7 +46,7 @@ int getUmbral(int p,int o, int um){
 }
   switch(o){
   case 0:
-    return 700;
+    return 250;
    break; 
   case 1:
     return 100 + um;
@@ -60,9 +61,11 @@ int getUmbral(int p,int o, int um){
   
 void setup() {
   pinMode(led, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  //myservo.attach(6);  // attaches the servo on pin 9 to the servo object
+  //pinMode(BUTTON_PIN, INPUT_PULLUP);
+  optionUmbral= 1;
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   Serial.begin(9600);
+  myservo.write(0);
 }
 
 
@@ -70,26 +73,35 @@ void setup() {
 void loop() {
   regulaUmbral = analogRead(A2);
   sensorValue = analogRead(A3);
-  currentState = digitalRead(BUTTON_PIN);
+  //currentState = digitalRead(BUTTON_PIN);
   if(cont % 2 == 0 ){
    prom = promValues(sensorValue);
-   if (cont>=800){
+   if (cont >= 800){
     cont=0;
    }
   }
   cont++; 
   if(sensorValue > getUmbral(prom, optionUmbral,regulaUmbral)){
-    digitalWrite(led, HIGH);
+   segs++;
+   digitalWrite(led, HIGH);
+   if(segs>=180){
+    myservo.write(0);
+    segs=0;
+   }
+   else{
+    myservo.write(segs);
+   }
   }
     else{
+      segs = 0;
       digitalWrite(led, LOW);
+      myservo.write(0);
     }
-  Serial.println(String(sensorValue) +","+ String(prom)+ ", "+ String(getUmbral(prom,optionUmbral,regulaUmbral)));
+  Serial.println(String(sensorValue) +","+ String(prom)+ ", "+ String(getUmbral(prom,optionUmbral,regulaUmbral)) + ", " +String(segs));
   delay(100);        
-    //servoValue = map(sensorValue, 100, 800, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
-   // myservo.write(servoValue);                  // sets the servo position according to the scaled value
-  //delay(15);                           
+                             
 }
+
 
 
 String arrayMessage(){
