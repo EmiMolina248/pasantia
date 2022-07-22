@@ -8,17 +8,17 @@
 */
 
 #include <Servo.h>
+//#include <Keyboard.h>
 
 Servo myservo;  // create servo object to control a servo
 int sensorValue,regulaUmbral, servoValue,cont, prom, optionUmbral,segs;
  
-//const int BUTTON_PIN = 7;
+const int BUTTON_PIN = 7;
 const int led = 8;
 const int largoArray = 10;// variable que contiene el largo del array del sensor
 int arraySensor[largoArray]; 
 int arrayRegulador[largoArray];
-int currentState  = HIGH;                         // the current reading from the input pin
-
+int currentState;// the current reading from the input pin
 
 
 int promValues(int b){
@@ -37,21 +37,21 @@ int promValues(int b){
 int getUmbral(int p,int o, int um){
   
   if(currentState == LOW){
-    if (optionUmbral== 3){
-        optionUmbral=0;
+    if (optionUmbral == 3){
+        optionUmbral=1;
     }
-    else{
+    else if(currentState == LOW){
       optionUmbral++;
     }
-}
+  }
   switch(o){
-  case 0:
+  case 1:
     return 250;
    break; 
-  case 1:
+  case 2:
     return 100 + um;
   break; 
-  case 2:
+  case 3:
      return p*1.25;
      break;
   }
@@ -61,11 +61,12 @@ int getUmbral(int p,int o, int um){
   
 void setup() {
   pinMode(led, OUTPUT);
-  //pinMode(BUTTON_PIN, INPUT_PULLUP);
-  optionUmbral= 1;
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   Serial.begin(9600);
   myservo.write(0);
+  //Keyboard.begin();
+
 }
 
 
@@ -73,7 +74,7 @@ void setup() {
 void loop() {
   regulaUmbral = analogRead(A2);
   sensorValue = analogRead(A3);
-  //currentState = digitalRead(BUTTON_PIN);
+  currentState = digitalRead(BUTTON_PIN);
   if(cont % 2 == 0 ){
    prom = promValues(sensorValue);
    if (cont >= 800){
@@ -81,10 +82,14 @@ void loop() {
    }
   }
   cont++; 
-  if(sensorValue > getUmbral(prom, optionUmbral,regulaUmbral)){
+  if(sensorValue > getUmbral(prom, optionUmbral,regulaUmbral) ){
    segs++;
    digitalWrite(led, HIGH);
-   if(segs>=180){
+   if( segs % 5 == 0){
+      Serial.println("keyboard,");
+   }
+   //Keyboard.press(' ');
+   if(segs>=180){ 
     myservo.write(0);
     segs=0;
    }
@@ -97,7 +102,7 @@ void loop() {
       digitalWrite(led, LOW);
       myservo.write(0);
     }
-  Serial.println(String(sensorValue) +","+ String(prom)+ ", "+ String(getUmbral(prom,optionUmbral,regulaUmbral)) + ", " +String(segs));
+  Serial.println(String(sensorValue) +","+ String(prom)+ ", "+ String(getUmbral(prom,optionUmbral,regulaUmbral)) + ", " +String(segs)+ "," +String(optionUmbral));
   delay(100);        
                              
 }
